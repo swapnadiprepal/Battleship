@@ -26,7 +26,7 @@ class BattleshipBot:
                 "misses": [],
                 "targets": [],
                 "sunk_ships": [],
-                "possible_moves": [[x, y] for x in range(self.grid_size) for y in range(self.grid_size)],
+                "possible_moves": [[x, y] for x in range(1, self.grid_size + 1) for y in range(1, self.grid_size + 1)],
                 "last_move": None
             }
             self.save_state(initial_state)
@@ -57,8 +57,8 @@ class BattleshipBot:
             [x, y-1], [x, y+1]
         ]
         for target in adjacent:
-            if (0 <= target[0] < self.grid_size and
-                0 <= target[1] < self.grid_size and
+            if (1 <= target[0] <= self.grid_size and
+                1 <= target[1] <= self.grid_size and
                 target not in self.state["hits"] and
                 target not in self.state["misses"] and
                 target not in self.state["targets"]):
@@ -74,17 +74,17 @@ class BattleshipBot:
             if length in self.state["sunk_ships"]:
                 continue
             # Horizontal placements
-            for x in range(self.grid_size):
-                for y in range(self.grid_size - length + 1):
+            for x in range(1, self.grid_size + 1):
+                for y in range(1, self.grid_size - length + 2):
                     if all((x, y + i) in possible_moves_set for i in range(length)):
                         for i in range(length):
-                            self.probability_grid[x, y + i] += 1
+                            self.probability_grid[x - 1, y + i - 1] += 1
             # Vertical placements
-            for x in range(self.grid_size - length + 1):
-                for y in range(self.grid_size):
+            for x in range(1, self.grid_size - length + 2):
+                for y in range(1, self.grid_size + 1):
                     if all((x + i, y) in possible_moves_set for i in range(length)):
                         for i in range(length):
-                            self.probability_grid[x + i, y] += 1
+                            self.probability_grid[x + i - 1, y - 1] += 1
 
     def next_move(self):
         if self.state["targets"]:
@@ -92,7 +92,7 @@ class BattleshipBot:
         else:
             self._calculate_probabilities()
             max_prob = np.max(self.probability_grid)
-            candidates = [(x, y) for x in range(self.grid_size) for y in range(self.grid_size) if self.probability_grid[x, y] == max_prob]
+            candidates = [(x, y) for x in range(1, self.grid_size + 1) for y in range(1, self.grid_size + 1) if self.probability_grid[x - 1, y - 1] == max_prob]
             self.state["last_move"] = random.choice(candidates)
 
         if list(self.state["last_move"]) in self.state["possible_moves"]:
@@ -107,6 +107,9 @@ class BattleshipBot:
         return move
 
 if __name__ == "__main__":
+    if len(sys.argv) != 3:
+        print("Usage: python battleship_bot.py <HIT/MISS/NONE> <sunk_ship_size/NONE>")
+        sys.exit(1)
     
     hit_or_miss = sys.argv[1]
     sunk_ship = sys.argv[2]
